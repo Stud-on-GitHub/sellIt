@@ -87,4 +87,50 @@ RSpec.describe "Classifieds API", type: :request do
       end
     end
   end
+
+  describe "PATCH /classifieds/:id" do
+    let(:classified) { FactoryBot.create :classified, user_id: current_user.id }
+
+    let(:params) {
+      { classified: { title: 'un autre titre', price: 56 } }
+    }
+
+    context "when unauthenticated" do
+      it "returns unauthorized" do
+        patch "/classifieds/#{classified.id}"
+        expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context "when authenticated" do
+      context "when everything goes well" do
+        before { patch "/classifieds/#{classified.id}", params: params, headers: authentication_header }
+
+        it { expect(response).to be_success }
+
+        it "modifies the given fields of the resource" do
+          updated_classified = Classified.find(classified.id)
+          expect(updated_classified.title).to eq 'un autre titre'
+          expect(updated_classified.price).to eq 56
+        end
+      end
+
+      it "returns a bad request when params is false" do
+        params[:classified][:price] = "dfghjklkjhg"
+        patch "/classifieds/#{classified.id}", params: params, headers: authentication_header
+        expect(response).to have_http_status :bad_request
+      end
+
+      it "returns a not found when resource can be found" do
+        patch "/classifieds/toto", params: params, headers: authentication_header
+        expect(response).to have_http_status :not_found
+      end
+
+      it "returns a forbidden when the requester is not the owner of the resource" do
+        another_classified = FactoryBot.create :classified
+        patch "/classifieds/#{another_classified.id}", params: params, headers: authentication_header
+        expect(response).to have_http_status :forbidden
+      end
+    end
+  end
 end
