@@ -3,5 +3,6 @@ class Classified < ApplicationRecord
 
   # validates :user, presence: true
   # or
-  validates_presence_of :user
+  validates_presence_of :user, :title, :price, :description
+  validates_numericality_of :price
 end

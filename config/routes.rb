@@ -3,5 +3,5 @@ Rails.application.routes.draw do
 
   get 'ping' => 'table_test#ping'
 
-  resources :classifieds, only: [:show, :index]
+  resources :classifieds, only: [:show, :index, :create]
 end
