@@ -24,7 +24,7 @@ RSpec.describe "Table Tests API", type: :request do
       # }
       # before { get '/ping', headers: auth_headers }
 
-      before { get '/ping', headers: authentication_headers }
+      before { get '/ping', headers: authentication_header }
 
       it 'works' do
         expect(response).to be_success
