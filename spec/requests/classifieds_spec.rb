@@ -5,17 +5,38 @@ RSpec.describe "Classifieds API", type: :request do
   let(:classified) { FactoryBot.create :classified, user_id: current_user.id }
 
   describe "GET /classifieds" do
-    before { 
-      FactoryBot.create_list :classified, 3
-      get "/classifieds" 
-    }
+    # before { 
+    #   FactoryBot.create_list :classified, 3
+    #   get "/classifieds" 
+    # }
 
-    it "works!" do
-      expect(response).to be_success
+    context "when everything goes well" do
+      let(:page) { 3 }
+      let(:per_page) { 5 }
+
+      before { 
+        FactoryBot.create_list :classified, 18
+        get "/classifieds", params: { page: page, per_page: per_page } # add pagination
+      }
+
+      it "works!" do
+        # expect(response).to be_success # code 200
+        expect(response).to have_http_status :partial_content # code 206
+      end
+
+      # it "returns all the entries" do
+      #   expect(parsed_body.count).to eq Classified.all.count
+      # end
+      it "returns paginate results" do
+        expect(parsed_body.map { |r| r['id'] }).to eq Classified.all.limit(per_page).offset((page - 1) * per_page).pluck(:id) #= or [11, 12, 13, 14, 15]
+      end
     end
 
-    it "returns all the entries" do
-      expect(parsed_body.count).to eq Classified.all.count
+    it "returns a bad request when parameters are missing" do
+      get "/classifieds"
+      expect(response).to have_http_status :bad_request
+      expect(parsed_body.keys).to include 'error'
+      expect(parsed_body['error']).to eq 'missing parameters'
     end
   end
 
