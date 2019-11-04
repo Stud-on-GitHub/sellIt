@@ -1,6 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe "Classifieds API", type: :request do
+  let(:classified) { FactoryBot.create :classified, user_id: current_user.id }
 
   describe "GET /classifieds" do
     before { 
@@ -18,7 +19,7 @@ RSpec.describe "Classifieds API", type: :request do
   end
 
   describe "GET /classifieds/:id" do
-    let(:classified) { FactoryBot.create :classified } #= classified = FactoryBot.create :classified
+    # let(:classified) { FactoryBot.create :classified } #= classified = FactoryBot.create :classified
 
     before { get "/classifieds/#{classified.id}" } #= get "/classifieds/#{classified.id}"
 
@@ -89,7 +90,7 @@ RSpec.describe "Classifieds API", type: :request do
   end
 
   describe "PATCH /classifieds/:id" do
-    let(:classified) { FactoryBot.create :classified, user_id: current_user.id }
+    # let(:classified) { FactoryBot.create :classified, user_id: current_user.id }
 
     let(:params) {
       { classified: { title: 'un autre titre', price: 56 } }
@@ -129,6 +130,38 @@ RSpec.describe "Classifieds API", type: :request do
       it "returns a forbidden when the requester is not the owner of the resource" do
         another_classified = FactoryBot.create :classified
         patch "/classifieds/#{another_classified.id}", params: params, headers: authentication_header
+        expect(response).to have_http_status :forbidden
+      end
+    end
+  end
+
+  describe "DELETE /classifieds/:id" do 
+    context "when unauthenticated" do
+      it "returns unauthorized" do
+        delete "/classifieds/#{classified.id}"
+        expect(response).to have_http_status :unauthorized
+      end
+    end
+
+    context "when authenticated" do
+      context "when everything goes well" do
+        before { delete "/classifieds/#{classified.id}", headers: authentication_header }
+
+        it { expect(response).to have_http_status :no_content }
+
+        it "deletes the given classified" do
+          expect(Classified.find_by(id: classified.id)).to eq nil # find_by() if not found => no error, with find() => error
+        end
+      end
+
+      it "returns a not found when resource can be found" do
+        delete "/classifieds/toto", headers: authentication_header
+        expect(response).to have_http_status :not_found
+      end
+
+      it "returns a forbidden when the requester is not the owner of the resource" do
+        another_classified = FactoryBot.create :classified
+        delete "/classifieds/#{another_classified.id}", headers: authentication_header
         expect(response).to have_http_status :forbidden
       end
     end
