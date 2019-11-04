@@ -4,4 +4,5 @@ Rails.application.routes.draw do
   get 'ping' => 'table_test#ping'
 
   resources :classifieds, only: [:show, :index, :create, :update, :destroy]
+  resources :users, only: [:show]
 end

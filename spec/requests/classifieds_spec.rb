@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'pp'
 
 RSpec.describe "Classifieds API", type: :request do
   let(:classified) { FactoryBot.create :classified, user_id: current_user.id }
@@ -35,10 +36,22 @@ RSpec.describe "Classifieds API", type: :request do
         #get "/classifieds/#{classified.id}"
         #expect(JSON.parse(response.body)['id']).to eq classified.id
         #...
-        expect(parsed_body['id']).to eq classified.id #with json_helper action/method
-        expect(parsed_body['title']).to eq classified.title
-        expect(parsed_body['price']).to eq classified.price
-        expect(parsed_body['description']).to eq classified.description
+        # pp parsed_body 
+        # expect(parsed_body['id']).to eq classified.id #with json_helper action/method
+        # expect(parsed_body['title']).to eq classified.title
+        # expect(parsed_body['price']).to eq classified.price
+        # expect(parsed_body['description']).to eq classified.description
+        # or
+        expect(parsed_body).to match({
+          id: classified.id,
+          title: classified.title,
+          price: classified.price,
+          description: classified.description,
+          user: {
+            id: classified.user.id,
+            fullname: classified.user.fullname
+          }.stringify_keys # symbol to string
+        }.stringify_keys)
       end
     end
     
