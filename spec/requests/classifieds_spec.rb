@@ -5,16 +5,16 @@ RSpec.describe "Classifieds API", type: :request do
   let(:classified) { FactoryBot.create :classified, user_id: current_user.id }
 
   describe "GET /classifieds" do
-    # before { 
-    #   FactoryBot.create_list :classified, 3
-    #   get "/classifieds" 
-    # }
     let(:page) { 3 }
     let(:per_page) { 5 }
 
     context "when everything goes well" do
+      # before { 
+      #   FactoryBot.create_list :classified, 18
+      # }
       before { 
-        FactoryBot.create_list :classified, 18
+        FactoryBot.create_list :classified, 5, category: "car" # add filter, it's a optional parameter
+        FactoryBot.create_list :classified, 12, category: "motocycle"
       }
 
       it "works!" do
@@ -38,6 +38,19 @@ RSpec.describe "Classifieds API", type: :request do
       it "returns paginate results  when order is desc" do
         get "/classifieds", params: { page: page, per_page: per_page, order: "desc" }
         expect(parsed_body.map { |r| r['id'] }).to eq Classified.all.order(created_at: "desc").limit(per_page).offset((page - 1) * per_page).pluck(:id) #= or [11, 12, 13, 14, 15]
+      end
+
+      it "returns categorized results when category optional parameter is given" do
+        get "/classifieds", params: { page: page, per_page: per_page, order: "asc", category: "car" }
+        parsed_body.each { |classified| expect(classified["category"]).to eq "car" }
+      end
+
+      it "returns the correct results when searching" do
+        classified1 = FactoryBot.create :classified, title: "The birds awesome do it"
+        classified2 = FactoryBot.create :classified, title: "Too much information"
+        classified3 = FactoryBot.create :classified, title: "My awesome title"
+        get "/classifieds", params: { page: 1, per_page: 5, order: "asc", query: "awesome" }
+        expect(parsed_body.map { |r| r['id'] }).to eq [classified1.id, classified3.id]
       end
     end
 
@@ -105,6 +118,7 @@ RSpec.describe "Classifieds API", type: :request do
           title: classified.title,
           price: classified.price,
           description: classified.description,
+          category: classified.category, # add category
           user: {
             id: classified.user.id,
             fullname: classified.user.fullname
