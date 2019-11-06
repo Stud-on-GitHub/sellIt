@@ -5,8 +5,13 @@ class ClassifiedsController < ApplicationController
 
   def index
     # render json: Classified.all
-    render json: { error: "missing parameters" }, status: :bad_request and return unless params[:page] && params[:per_page]
-    paginate json: Classified.all, status: :partial_content # add pagination
+    # render json: { error: "missing parameters" }, status: :bad_request and return unless params[:page] && params[:per_page]
+    # paginate json: Classified.all, status: :partial_content # add pagination
+    [:page, :per_page, :order].each do |param_sym|
+      render json: { error: "missing parameter #{param_sym.to_s}" }, status: :bad_request and return unless params[param_sym]
+    end
+    render json: { error: "order parameter must be asc or desc" }, status: :bad_request and return unless params[:order] == "asc" || params[:order] == "desc"
+    paginate json: Classified.all.order(created_at: params[:order]), status: :partial_content # add pagination
   end
   
   def show

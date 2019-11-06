@@ -9,34 +9,71 @@ RSpec.describe "Classifieds API", type: :request do
     #   FactoryBot.create_list :classified, 3
     #   get "/classifieds" 
     # }
+    let(:page) { 3 }
+    let(:per_page) { 5 }
 
     context "when everything goes well" do
-      let(:page) { 3 }
-      let(:per_page) { 5 }
-
       before { 
         FactoryBot.create_list :classified, 18
-        get "/classifieds", params: { page: page, per_page: per_page } # add pagination
       }
 
       it "works!" do
+        # get "/classifieds"
         # expect(response).to be_success # code 200
+        get "/classifieds", params: { page: page, per_page: per_page, order: "asc" } # add pagination and order     
         expect(response).to have_http_status :partial_content # code 206
       end
 
       # it "returns all the entries" do
       #   expect(parsed_body.count).to eq Classified.all.count
       # end
-      it "returns paginate results" do
-        expect(parsed_body.map { |r| r['id'] }).to eq Classified.all.limit(per_page).offset((page - 1) * per_page).pluck(:id) #= or [11, 12, 13, 14, 15]
+      # it "returns paginate results" do
+      #   expect(parsed_body.map { |r| r['id'] }).to eq Classified.all.limit(per_page).offset((page - 1) * per_page).pluck(:id) #= or [11, 12, 13, 14, 15]
+      # end
+      it "returns paginate results  when order is asc" do
+        get "/classifieds", params: { page: page, per_page: per_page, order: "asc" }
+        expect(parsed_body.map { |r| r['id'] }).to eq Classified.all.order(created_at: "asc").limit(per_page).offset((page - 1) * per_page).pluck(:id) #= or [11, 12, 13, 14, 15]
+      end
+
+      it "returns paginate results  when order is desc" do
+        get "/classifieds", params: { page: page, per_page: per_page, order: "desc" }
+        expect(parsed_body.map { |r| r['id'] }).to eq Classified.all.order(created_at: "desc").limit(per_page).offset((page - 1) * per_page).pluck(:id) #= or [11, 12, 13, 14, 15]
       end
     end
 
-    it "returns a bad request when parameters are missing" do
-      get "/classifieds"
+    # it "returns a bad request when parameters are missing" do
+    #   get "/classifieds"
+    #   expect(response).to have_http_status :bad_request
+    #   expect(parsed_body.keys).to include 'error'
+    #   expect(parsed_body['error']).to eq 'missing parameters'
+    # end
+
+    it "returns a bad request when page parameter is missing" do
+      get "/classifieds", params: {per_page: per_page, order: "asc"}
       expect(response).to have_http_status :bad_request
       expect(parsed_body.keys).to include 'error'
-      expect(parsed_body['error']).to eq 'missing parameters'
+      expect(parsed_body['error']).to eq 'missing parameter page'
+    end
+
+    it "returns a bad request when per page parameter is missing" do
+      get "/classifieds", params: {page: page, order: "asc"}
+      expect(response).to have_http_status :bad_request
+      expect(parsed_body.keys).to include 'error'
+      expect(parsed_body['error']).to eq 'missing parameter per_page'
+    end
+
+    it "returns a bad request when order parameter is missing" do
+      get "/classifieds", params: {page: page, per_page: per_page}
+      expect(response).to have_http_status :bad_request
+      expect(parsed_body.keys).to include 'error'
+      expect(parsed_body['error']).to eq 'missing parameter order'
+    end
+
+    it "returns a bad request when order parameter is false" do
+      get "/classifieds", params: {page: page, per_page: per_page, order: "ysiydi"}
+      expect(response).to have_http_status :bad_request
+      expect(parsed_body.keys).to include 'error'
+      expect(parsed_body['error']).to eq 'order parameter must be asc or desc'
     end
   end
 
