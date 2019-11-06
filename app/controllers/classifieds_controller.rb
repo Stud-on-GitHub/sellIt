@@ -65,6 +65,10 @@ class ClassifiedsController < ApplicationController
     end
   end
 
+  def publish #publish the classified 
+    render json: { status: 'published' }, status: :created
+   end
+
   private
 
   def classified_params

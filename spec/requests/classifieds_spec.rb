@@ -181,6 +181,12 @@ RSpec.describe "Classifieds API", type: :request do
     end
   end
 
+  describe "POST /classifieds/:id/publications" do
+    before { post "/classifieds/#{classified.id}/publications" }
+
+    it { expect(response).to have_http_status :created }
+  end
+
   describe "PATCH /classifieds/:id" do
     # let(:classified) { FactoryBot.create :classified, user_id: current_user.id }
 
